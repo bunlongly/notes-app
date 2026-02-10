@@ -46,9 +46,14 @@ builder.Services.AddAuthentication(x =>
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
-        policy => policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
-                        .AllowAnyHeader()
-                        .AllowAnyMethod());
+        policy => policy.WithOrigins(
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "https://notes-app-five-peach.vercel.app"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials());
 });
 
 var app = builder.Build();

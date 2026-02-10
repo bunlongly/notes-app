@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { AuthResponse } from '@/types';
 import { logger } from '@/utils/logger';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -32,7 +32,11 @@ api.interceptors.request.use(config => {
   if (accessToken && !config.url?.includes('/auth/refresh')) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
-  logger.api.request(config.method?.toUpperCase() || 'GET', config.url || '', config.data);
+  logger.api.request(
+    config.method?.toUpperCase() || 'GET',
+    config.url || '',
+    config.data
+  );
   return config;
 });
 
@@ -53,7 +57,7 @@ api.interceptors.response.use(
       error.config?.url || '',
       error.response?.data || error.message
     );
-    
+
     const originalRequest = error.config;
 
     // If error is 401 and we haven't tried to refresh yet
@@ -97,7 +101,9 @@ api.interceptors.response.use(
         localStorage.setItem('refreshToken', newRefreshToken);
 
         // Update authorization header
-        api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+        api.defaults.headers.common[
+          'Authorization'
+        ] = `Bearer ${newAccessToken}`;
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
         processQueue(null, newAccessToken);
