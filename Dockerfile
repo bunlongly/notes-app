@@ -1,8 +1,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
-# Copy everything
-COPY . .
+# Copy backend project
+COPY backend/NotesAPI/ .
 
 # Restore and publish
 RUN dotnet restore
