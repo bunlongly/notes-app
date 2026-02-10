@@ -1,11 +1,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /source
 
-COPY *.csproj .
-RUN dotnet restore
+# Copy csproj and restore
+COPY NotesAPI.csproj ./
+RUN dotnet restore NotesAPI.csproj
 
-COPY . .
-RUN dotnet publish -c Release -o /app
+# Copy everything else and build
+COPY . ./
+RUN dotnet publish NotesAPI.csproj -c Release -o /app
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
