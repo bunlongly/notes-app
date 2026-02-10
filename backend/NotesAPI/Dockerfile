@@ -1,17 +1,16 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /source
+WORKDIR /app
 
-# Copy csproj and restore
-COPY NotesAPI.csproj ./
-RUN dotnet restore NotesAPI.csproj
+# Copy everything
+COPY . .
 
-# Copy everything else and build
-COPY . ./
-RUN dotnet publish NotesAPI.csproj -c Release -o /app
+# Restore and publish
+RUN dotnet restore
+RUN dotnet publish -c Release -o out
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
-COPY --from=build /app .
+COPY --from=build /app/out .
 
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
