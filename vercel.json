@@ -1,0 +1,11 @@
+{
+  "buildCommand": "cd frontend/notes-app && npm install && npm run build",
+  "outputDirectory": "frontend/notes-app/dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
