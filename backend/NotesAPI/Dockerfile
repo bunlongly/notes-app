@@ -4,9 +4,9 @@ WORKDIR /app
 # Copy everything from current directory
 COPY . .
 
-# Restore and publish
-RUN dotnet restore
-RUN dotnet publish -c Release -o out
+# Restore and publish explicitly naming the project
+RUN dotnet restore "./NotesAPI.csproj"
+RUN dotnet publish "./NotesAPI.csproj" -c Release -o out
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
