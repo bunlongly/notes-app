@@ -1,91 +1,100 @@
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using NotesAPI.Data;
-using NotesAPI.Services;
-using NotesAPI.Middleware;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// Database connection
-builder.Services.AddScoped<IDbConnectionFactory>(sp => 
-    new DbConnectionFactory(builder.Configuration.GetConnectionString("DefaultConnection")!));
-
-// Services
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<INoteService, NoteService>();
-
-// JWT Authentication
+// ------------------------------------------------------------
+// Config values (from appsettings.json + Railway env vars)
+// ------------------------------------------------------------
 var jwtKey = builder.Configuration["Jwt:Key"];
-var key = Encoding.ASCII.GetBytes(jwtKey!);
-
-builder.Services.AddAuthentication(x =>
+if (string.IsNullOrWhiteSpace(jwtKey))
 {
-    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(x =>
-{
-    x.RequireHttpsMetadata = false;
-    x.SaveToken = true;
-    x.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = false,
-        ValidateAudience = false
-    };
-});
-
-// CORS for frontend
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend",
-        policy => policy.AllowAnyOrigin()
-        .AllowAnyHeader()
-        .AllowAnyMethod());
-});
-
-var app = builder.Build();
-
-// Rate limiting middleware (MUST be early in pipeline)
-app.UseMiddleware<RateLimitingMiddleware>();
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    throw new Exception("Missing JWT key. Please set Jwt:Key (or env Jwt__Key).");
 }
 
-// Request logging middleware
-app.Use(async (context, next) =>
+var useCookies = builder.Configuration.GetValue<bool>("Auth:UseCookies");
+
+// If your Vercel domain changes, add it here.
+var allowedOrigins = new[]
 {
-    var path = context.Request.Path;
-    var method = context.Request.Method;
-    Console.WriteLine($"\n==> [{DateTime.Now:HH:mm:ss}] {method} {path}");
-    
-    if (context.Request.ContentLength > 0)
+    "https://notes-app-five-peach.vercel.app"
+    // "https://your-custom-domain.com"
+};
+
+// ------------------------------------------------------------
+// Services
+// ------------------------------------------------------------
+builder.Services.AddControllers();
+
+// CORS (fixes: Access-Control-Allow-Origin missing)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        context.Request.EnableBuffering();
-        using var reader = new StreamReader(context.Request.Body, leaveOpen: true);
-        var body = await reader.ReadToEndAsync();
-        context.Request.Body.Position = 0;
-        Console.WriteLine($"    Body: {body}");
-    }
-    
-    await next();
-    
-    Console.WriteLine($"<== [{DateTime.Now:HH:mm:ss}] {method} {path} - Status: {context.Response.StatusCode}");
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+
+        // Only enable credentials if you truly use cookies
+        // (UseCookies=true). Otherwise keep it off.
+        if (useCookies)
+        {
+            policy.AllowCredentials();
+        }
+    });
 });
 
+// Authentication (JWT)
+builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = true;
+        options.SaveToken = true;
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// If you already register your services (like NoteService, UserService, DbConnectionFactory)
+// keep them here. Example:
+// builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
+// builder.Services.AddScoped<INoteService, NoteService>();
+// builder.Services.AddScoped<IUserService, UserService>();
+
+// ------------------------------------------------------------
+// App
+// ------------------------------------------------------------
+var app = builder.Build();
+
+// Helpful for Railway debugging
+// app.UseDeveloperExceptionPage(); // enable only if you want detailed errors in non-prod
+
+app.UseRouting();
+
+// CORS must be BEFORE auth + controllers
 app.UseCors("AllowFrontend");
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
+
+// Simple health check (optional)
+app.MapGet("/", () => Results.Ok("Notes API is running"));
 
 app.Run();
