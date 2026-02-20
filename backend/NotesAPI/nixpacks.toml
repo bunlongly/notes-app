@@ -3,10 +3,9 @@ nixPkgs = ["dotnet-sdk_8"]
 
 [phases.build]
 cmds = [
-  "dotnet --info",
-  "dotnet publish NotesAPI.csproj -c Release -o out",
+  "dotnet publish NotesAPI.csproj -c Release -r linux-x64 --self-contained true -o out",
   "ls -R out"
 ]
 
 [start]
-cmd = "dotnet out/NotesAPI.dll"
+cmd = "./out/NotesAPI"
