@@ -1,0 +1,102 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using NotesAPI.Data;
+using NotesAPI.Services;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ------------------------------------------------------------
+// Config values (from appsettings.json + Railway env vars)
+// ------------------------------------------------------------
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    throw new Exception("Missing JWT key. Please set Jwt:Key (or env Jwt__Key).");
+}
+
+var useCookies = builder.Configuration.GetValue<bool>("Auth:UseCookies");
+
+// Allowed origins - includes localhost for development
+var allowedOrigins = builder.Environment.IsDevelopment() 
+    ? new[] { "http://localhost:5173", "http://localhost:5174", "https://notes-app-tech.vercel.app" }
+    : new[] { "https://notes-app-tech.vercel.app" };
+
+// ------------------------------------------------------------
+// Services
+// ------------------------------------------------------------
+builder.Services.AddControllers();
+
+// CORS (fixes: Access-Control-Allow-Origin missing)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+
+        // Only enable credentials if you truly use cookies
+        // (UseCookies=true). Otherwise keep it off.
+        if (useCookies)
+        {
+            policy.AllowCredentials();
+        }
+    });
+});
+
+// Authentication (JWT)
+builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+        options.SaveToken = true;
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// Register application services
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+    ?? throw new Exception("Missing connection string");
+
+builder.Services.AddSingleton<IDbConnectionFactory>(sp => new DbConnectionFactory(connectionString));
+builder.Services.AddScoped<INoteService, NoteService>();
+builder.Services.AddScoped<IUserService, UserService>();
+
+// ------------------------------------------------------------
+// App
+// ------------------------------------------------------------
+var app = builder.Build();
+
+// Helpful for Railway debugging
+// app.UseDeveloperExceptionPage(); // enable only if you want detailed errors in non-prod
+
+app.UseRouting();
+
+// CORS must be BEFORE auth + controllers
+app.UseCors("AllowFrontend");
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+// Simple health check (optional)
+app.MapGet("/", () => Results.Ok("Notes API is running"));
+
+app.Run();
