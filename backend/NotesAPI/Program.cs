@@ -4,7 +4,12 @@ using Microsoft.IdentityModel.Tokens;
 using NotesAPI.Data;
 using NotesAPI.Services;
 
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Use PORT environment variable if present (for Railway)
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+builder.WebHost.UseUrls($"http://*:{port}");
 
 var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKey))
