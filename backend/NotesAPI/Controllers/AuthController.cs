@@ -20,7 +20,7 @@ public class AuthController : ControllerBase
     // Check if cookies are enabled (best practice for production)
     private bool UseCookies => _configuration.GetValue<bool>("Auth:UseCookies");
 
-    // Helper method to set tokens (localStorage or httpOnly cookies)
+
     private void SetTokens(AuthResponse authResponse)
     {
         if (UseCookies)
@@ -28,8 +28,8 @@ public class AuthController : ControllerBase
             // Best Practice: httpOnly cookies (secure, can't be accessed by JavaScript)
             Response.Cookies.Append("accessToken", authResponse.AccessToken, new CookieOptions
             {
-                HttpOnly = true,      // Prevents JavaScript access (XSS protection)
-                Secure = true,        // Only sent over HTTPS in production
+                HttpOnly = true,     
+                Secure = true,        
                 SameSite = SameSiteMode.Strict,  // CSRF protection
                 Expires = DateTimeOffset.Now.AddMinutes(15)
             });

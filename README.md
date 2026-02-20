@@ -16,6 +16,7 @@ A full-stack notes application built with ASP.NET Core 8 (backend) and Vue 3 + V
 - Responsive UI using Tailwind CSS
 - State management (Pinia)
 - Simple API integration (Axios)
+- Rate limiting middleware for backend API
 - CORS and environment variable support for production
 
 ## Tech Stack
@@ -61,7 +62,7 @@ notes-app-techbodia/
    - Start: `dotnet out/NotesAPI.dll`
 3. Add environment variables:
    - `Jwt__Key` (at least 16 chars)
-   - `ConnectionStrings__DefaultConnection` 
+   - `ConnectionStrings__DefaultConnection`
 4. Redeploy after any changes.
 
 ### Frontend (Vercel)
