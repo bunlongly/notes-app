@@ -36,7 +36,8 @@ api.interceptors.request.use(config => {
     config.data
   );
   return config;
-});\n
+});
+
 api.interceptors.response.use(
   response => {
     logger.api.response(
