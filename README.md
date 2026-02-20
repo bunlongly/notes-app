@@ -1,109 +1,87 @@
 # Notes App
 
-A modern full-stack notes application with secure authentication.
+A full-stack notes application built with ASP.NET Core 8 (backend) and Vue 3 + Vite (frontend).
 
 ## Features
 
-- 🔐 Secure user authentication with JWT
-- 📝 Create, edit, and delete notes
-- 🔍 Search and sort notes
-- 📱 Responsive design
-- ✨ Clean, modern UI
+- User registration and login (JWT authentication)
+- Create, read, update, and delete notes (CRUD)
+- Each note has:
+  - Title (required)
+  - Content (optional)
+  - Created At (auto-generated)
+  - Updated At (auto-generated when edited)
+- Users can only access and modify their own notes
+- Notes list page with filtering, sorting, and search
+- Responsive UI using Tailwind CSS
+- State management (Pinia)
+- Simple API integration (Axios)
+- CORS and environment variable support for production
 
 ## Tech Stack
 
-**Backend:** ASP.NET Core 8, SQLite, JWT  
-**Frontend:** Vue 3, TypeScript, Tailwind CSS
+- **Frontend:** Vue 3, TypeScript, Vite, Axios, Tailwind CSS
+- **Backend:** ASP.NET Core 8, Dapper, JWT
+- **Deployment:** Railway (backend), Vercel (frontend)
 
-## Quick Start
+## Project Structure
 
-### Prerequisites
-
-- .NET 8 SDK
-- Node.js 18+
-
-### Run Locally
-
-1. **Start Backend:**
-
-```bash
-cd backend/NotesAPI
-dotnet run
+```
+notes-app-techbodia/
+├── backend/
+│   └── NotesAPI/
+│       ├── Controllers/
+│       ├── Data/
+│       ├── Middleware/
+│       ├── Models/
+│       ├── Services/
+│       ├── Program.cs
+│       ├── NotesAPI.csproj
+│       ├── appsettings.json
+│       ├── appsettings.Development.json
+│       ├── nixpacks.toml
+│       └── ...
+├── frontend/
+│   └── notes-app/
+│       ├── src/
+│       ├── index.html
+│       ├── package.json
+│       ├── tailwind.config.js
+│       ├── vite.config.ts
+│       └── ...
 ```
 
-2. **Start Frontend:**
+## Setup & Deployment
 
-```bash
-cd frontend/notes-app
-npm install
-npm run dev
-```
+### Backend (Railway)
 
-3. Visit `http://localhost:5174`
+1. Set root directory to `backend/NotesAPI` in Railway dashboard.
+2. Use `nixpacks.toml` for build/start commands:
+   - Build: `dotnet publish NotesAPI.csproj -c Release -o out`
+   - Start: `dotnet out/NotesAPI.dll`
+3. Add environment variables:
+   - `Jwt__Key` (at least 16 chars)
+   - `ConnectionStrings__DefaultConnection` 
+4. Redeploy after any changes.
 
-## Deployment
+### Frontend (Vercel)
 
-- **Backend:** Railway → [Guide](DEPLOY_NOW.md)
-- **Frontend:** Vercel → [Guide](DEPLOY_NOW.md)
+1. Set root directory to `frontend/notes-app` in Vercel dashboard.
+2. Add environment variable:
+   - `VITE_API_URL` (your Railway backend API URL, e.g. `https://notes-app-production-xxxx.up.railway.app/api`)
+3. Redeploy after any changes.
+
+## Usage
+
+- Register a new account, log in, and manage your notes.
+- All data is stored securely in the backend.
+
+## Troubleshooting
+
+- If you see CORS errors, make sure your backend's CORS policy includes your Vercel domain.
+- If you see JWT errors, ensure your `Jwt__Key` is at least 16 characters.
+- If the backend fails to start, check Railway build logs and environment variables.
 
 ## License
 
-MIT### Notes
-
-- GET /api/notes - Get all notes for logged-in user
-- POST /api/notes - Create a new note
-- PUT /api/notes/{id} - Update an existing note
-- DELETE /api/notes/{id} - Delete a note
-
-## Security Features
-
-- Passwords are hashed using BCrypt before storage
-- JWT tokens with 15-minute expiration for access tokens
-- Refresh tokens valid for 7 days
-- Automatic token rotation on refresh
-- Users can only access their own notes
-- CORS configured for development
-
-## Database
-
-The application uses SQLite, a file-based database that requires no separate server installation. The database file (notes.db) is created automatically when you first run the backend.
-
-Tables:
-
-- Users - User account information
-- Notes - User notes
-- RefreshTokens - Token management for authentication
-
-## Development
-
-The frontend uses Vite for fast development with hot module replacement. The backend uses ASP.NET Core's built-in development server with automatic recompilation.
-
-To build for production:
-
-Backend:
-
-```bash
-dotnet publish -c Release
-```
-
-Frontend:
-
-```bash
-npm run build
-```
-
-## Common Issues
-
-If you can't connect to the backend, make sure:
-
-- The backend is running on port 5000
-- CORS is configured to allow requests from localhost:5173
-
-If you have authentication issues:
-
-- Clear your browser's session storage
-- Make sure the JWT key in appsettings.json is at least 32 characters
-
-## License
-
-This project was created for demonstration purposes.
+MIT
