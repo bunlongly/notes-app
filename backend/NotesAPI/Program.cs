@@ -20,8 +20,8 @@ if (string.IsNullOrWhiteSpace(jwtKey))
 var useCookies = builder.Configuration.GetValue<bool>("Auth:UseCookies");
 
 var allowedOrigins = builder.Environment.IsDevelopment() 
-    ? new[] { "http://localhost:5173", "http://localhost:5174", "https://notes-app-tech.vercel.app" }
-    : new[] { "https://notes-app-tech.vercel.app" };
+    ? new[] { "http://localhost:5173", "http://localhost:5174", "https://notes-app-tech.vercel.app", "https://notes-app-git-main-bunlongs-projects-cd694e88.vercel.app" }
+    : new[] { "https://notes-app-tech.vercel.app", "https://notes-app-git-main-bunlongs-projects-cd694e88.vercel.app" };
 
 builder.Services.AddControllers();
 builder.Services.AddCors(options =>
