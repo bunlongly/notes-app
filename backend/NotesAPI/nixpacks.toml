@@ -1,4 +1,3 @@
-[phases.setup]
 nixPkgs = ["dotnet-sdk_8"]
 
 [phases.build]
@@ -9,3 +8,14 @@ cmds = [
 
 [start]
 cmd = "dotnet ./out/NotesAPI.dll"
+
+[phases.setup]
+nixPkgs = ["dotnet-sdk_8"]
+
+[phases.build]
+cmds = [
+  "dotnet publish -c Release -o out"
+]
+
+[start]
+cmd = "dotnet out/NotesAPI.dll"
