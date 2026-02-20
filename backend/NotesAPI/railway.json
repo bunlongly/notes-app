@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-   "startCommand": "./out/NotesAPI",
+    "startCommand": "dotnet out/NotesAPI.dll",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
