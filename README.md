@@ -77,12 +77,3 @@ notes-app-techbodia/
 - Register a new account, log in, and manage your notes.
 - All data is stored securely in the backend.
 
-## Troubleshooting
-
-- If you see CORS errors, make sure your backend's CORS policy includes your Vercel domain.
-- If you see JWT errors, ensure your `Jwt__Key` is at least 16 characters.
-- If the backend fails to start, check Railway build logs and environment variables.
-
-## License
-
-MIT
