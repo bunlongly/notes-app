@@ -11,7 +11,6 @@ const api = axios.create({
   }
 });
 
-// Track if we're currently refreshing the token
 let isRefreshing = false;
 let failedQueue: any[] = [];
 
@@ -26,7 +25,6 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Add access token to requests if available
 api.interceptors.request.use(config => {
   const accessToken = localStorage.getItem('accessToken');
   if (accessToken && !config.url?.includes('/auth/refresh')) {
@@ -38,9 +36,7 @@ api.interceptors.request.use(config => {
     config.data
   );
   return config;
-});
-
-// Handle 401 responses and automatically refresh token
+});\n
 api.interceptors.response.use(
   response => {
     logger.api.response(

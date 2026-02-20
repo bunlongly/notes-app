@@ -6,9 +6,6 @@ using NotesAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ------------------------------------------------------------
-// Config values (from appsettings.json + Railway env vars)
-// ------------------------------------------------------------
 var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKey))
 {
@@ -17,17 +14,11 @@ if (string.IsNullOrWhiteSpace(jwtKey))
 
 var useCookies = builder.Configuration.GetValue<bool>("Auth:UseCookies");
 
-// Allowed origins - includes localhost for development
 var allowedOrigins = builder.Environment.IsDevelopment() 
     ? new[] { "http://localhost:5173", "http://localhost:5174", "https://notes-app-tech.vercel.app" }
     : new[] { "https://notes-app-tech.vercel.app" };
 
-// ------------------------------------------------------------
-// Services
-// ------------------------------------------------------------
 builder.Services.AddControllers();
-
-// CORS (fixes: Access-Control-Allow-Origin missing)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -36,8 +27,6 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowAnyMethod();
 
-        // Only enable credentials if you truly use cookies
-        // (UseCookies=true). Otherwise keep it off.
         if (useCookies)
         {
             policy.AllowCredentials();
@@ -45,7 +34,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Authentication (JWT)
 builder.Services
     .AddAuthentication(options =>
     {
@@ -70,7 +58,6 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-// Register application services
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
     ?? throw new Exception("Missing connection string");
 
@@ -78,25 +65,13 @@ builder.Services.AddSingleton<IDbConnectionFactory>(sp => new DbConnectionFactor
 builder.Services.AddScoped<INoteService, NoteService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
-// ------------------------------------------------------------
-// App
-// ------------------------------------------------------------
 var app = builder.Build();
 
-// Helpful for Railway debugging
-// app.UseDeveloperExceptionPage(); // enable only if you want detailed errors in non-prod
-
 app.UseRouting();
-
-// CORS must be BEFORE auth + controllers
 app.UseCors("AllowFrontend");
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-
-// Simple health check (optional)
 app.MapGet("/", () => Results.Ok("Notes API is running"));
 
 app.Run();
